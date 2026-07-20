@@ -1,0 +1,232 @@
+// Norishé — Prisma schema
+// Configured for MySQL on cPanel (see CPANEL_DEPLOYMENT.md). DATABASE_URL
+// should be a mysql:// connection string from cPanel's MySQL Databases tool.
+//
+// NOTE: switching this back to "sqlite" for local development will require
+// DATABASE_URL to point at a local file (e.g. "file:./dev.db") again — the
+// two providers aren't interchangeable without also changing the URL.
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// NOTE: fields below use String instead of Prisma `enum` because SQLite
+// (the local-dev provider) does not support native enums. Valid values are
+// documented in comments next to each field. If you switch to PostgreSQL in
+// production, you can optionally convert these back to real `enum` types.
+
+model AdminUser {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  passwordHash  String
+  role          String   @default("ADMIN") // "ADMIN" | "STAFF"
+  mustChangePwd Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  auditLogs     AuditLog[]
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  status    String   @default("NEW") // NEW | CONTACTED | PLAN_SENT | ACTIVE | PAUSED | CHURNED
+  notes     String?  @db.Text
+
+  // Section 1: Personal Information
+  fullName         String
+  email            String
+  phone            String
+  dateOfBirth      String
+  gender           String
+  occupation       String
+  city             String
+  state            String
+  emergencyContact String?
+
+  // Section 2: Wellness Goals
+  reasons          String  @db.Text // JSON-encoded string[]
+  topGoals         String  @db.Text
+  motivation       Int
+
+  // Section 3: Health Profile (sensitive)
+  height              String
+  currentWeight       String
+  targetWeight        String
+  medicalConditions   String?  @db.Text
+  medicationsSupplements String? @db.Text
+  allergies           String?  @db.Text
+  pregnantOrBreastfeeding String?
+
+  // Section 4: Lifestyle
+  activityLevel String
+  exerciseDays  Int
+  sleepHours    String
+  stressLevel   String
+
+  // Section 5: Eating Habits
+  mealsPerDay      Int
+  breakfastFrequency String
+  eatOutFrequency    String
+  snackFrequency     String
+  waterIntake        String
+
+  // Section 6: Food Preferences
+  foodsLoved       String? @db.Text
+  foodsDisliked    String? @db.Text
+  foodsNeverEaten  String? @db.Text
+  preferredProteins String? @db.Text
+  preferredCarbs    String? @db.Text
+  favouriteVeggies  String? @db.Text
+  favouriteFruits   String? @db.Text
+  spiceLevel        String
+
+  // Section 7: Meal Plan Preferences
+  interestedPlan   String?
+  mealsNeeded      Int
+  deliveryDays     Int
+  preferredTime    String
+
+  // Section 8: Packaging & Delivery
+  deliveryAddress      String  @db.Text
+  deliveryInstructions String? @db.Text
+  contactMethod        String
+
+  // Section 9: Consent
+  consentAccurate Boolean
+  consentAdvice   Boolean
+  consentContact  Boolean
+
+  planSlug String?
+  plan     Plan?   @relation(fields: [planSlug], references: [slug])
+
+  subscription Subscription?
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  type      String // NEWSLETTER | CONTACT | CORPORATE | EXIT_INTENT
+  status    String   @default("NEW") // NEW | IN_PROGRESS | RESOLVED | ARCHIVED
+  name      String?
+  email     String
+  phone     String?
+  company   String?
+  message   String? @db.Text
+  meta      String? @db.Text // JSON blob for extra fields (e.g. corporate headcount)
+}
+
+model Plan {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  emoji       String
+  tagline     String
+  description String   @db.Text
+  perfectFor  String   @db.Text // JSON-encoded string[]
+  sampleMenu  String   @db.Text // JSON-encoded string[]
+  philosophy  String   @db.Text
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  popular     Boolean  @default(false)
+  tiers       PlanTier[]
+  enrollments Enrollment[]
+  subscriptions Subscription[]
+}
+
+model PlanTier {
+  id           String  @id @default(cuid())
+  planId       String
+  plan         Plan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  mealsPerWeek Int
+  billing      String // "weekly" | "monthly"
+  priceNaira   Int // TODO: owner sets real prices in admin
+  active       Boolean @default(true)
+}
+
+model MenuItem {
+  id        String   @id @default(cuid())
+  name      String
+  imageUrl  String?
+  planTags  String // JSON-encoded string[] of plan slugs
+  calories  Int
+  protein   Int
+  createdAt DateTime @default(now())
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  role      String?
+  quote     String   @db.Text
+  rating    Int      @default(5)
+  visible   Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Subscription {
+  id            String     @id @default(cuid())
+  enrollmentId  String     @unique
+  enrollment    Enrollment @relation(fields: [enrollmentId], references: [id])
+  planId        String
+  plan          Plan       @relation(fields: [planId], references: [id])
+  startDate     DateTime   @default(now())
+  deliveryDays  String // JSON-encoded string[]
+  paymentStatus String     @default("TRANSFER_PENDING") // PAID | TRANSFER_PENDING | ON_DELIVERY
+  createdAt     DateTime   @default(now())
+}
+
+model Settings {
+  id                 String  @id @default("singleton")
+  phone              String  @default("+234 706 180 8293")
+  email              String  @default("hello@norishe.vip")
+  whatsapp           String  @default("2347061808293")
+  instagram           String  @default("norishe.vip")
+  address            String  @default("15 Kainji Crescent, off Lake Chad Crescent, Maitama, Abuja, Nigeria")
+  deliveryNote       String  @default("Currently delivering across Abuja, with select zones in other major Nigerian cities — confirm coverage at enrollment.")
+  announcementBanner String?
+  ga4Id              String?
+  metaPixelId        String?
+  paystackPublicKey  String?
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  type      String // "pageview" | "cta_click"
+  path      String
+  label     String?
+}
+
+model AuditLog {
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  adminId   String
+  admin     AdminUser @relation(fields: [adminId], references: [id])
+  action    String
+  detail    String? @db.Text
+}
+
+// Generic, admin-editable text content for marketing copy blocks (hero
+// headline, About page mission/vision, footer tagline, etc.) so the owner
+// never has to touch code to update wording. Seeded with the site's
+// original copy as defaults — see prisma/seed.ts and src/lib/site-content.ts.
+model SiteContent {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}
+
+model FaqItem {
+  id        String   @id @default(cuid())
+  question  String   @db.Text
+  answer    String   @db.Text
+  order     Int      @default(0)
+  visible   Boolean  @default(true)
+  createdAt DateTime @default(now())
+}

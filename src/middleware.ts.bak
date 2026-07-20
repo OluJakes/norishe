@@ -1,0 +1,31 @@
+import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
+
+export default withAuth(
+  function middleware(req) {
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      // Always allow the login page itself through — only require a token
+      // for every other /admin route. (Excluding /admin/login via the
+      // matcher regex below is unreliable across Next.js versions, so the
+      // exclusion is enforced here instead, which is the documented,
+      // reliable approach.)
+      authorized: ({ token, req }) => {
+        if (req.nextUrl.pathname.startsWith("/admin/login")) return true;
+        return !!token;
+      },
+    },
+    pages: { signIn: "/admin/login" },
+    // Explicitly pass the secret rather than relying on next-auth to find
+    // NEXTAUTH_SECRET implicitly — if it's missing, this throws a clear
+    // error in the server log instead of a silent error=Configuration
+    // redirect on the very first /admin request.
+    secret: process.env.NEXTAUTH_SECRET,
+  }
+);
+
+export const config = {
+  matcher: ["/admin/:path*"],
+};

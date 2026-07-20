@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-body: "Poppins", system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: #232323;
+  background-color: #FAF8F3;
+}
+
+::selection {
+  background: #C9A24B;
+  color: #1E3A2A;
+}
+
+.label-caps {
+  @apply text-xs font-semibold uppercase tracking-label text-gold-dark;
+}
+
+.rule-gold {
+  @apply h-px w-16 bg-gold-gradient;
+}
+
+.container-nrs {
+  @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12;
+}
+
+.btn-gold {
+  @apply inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient px-7 py-3.5 text-sm font-semibold tracking-wide text-forest-dark shadow-gold transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98] min-h-[44px];
+}
+
+.btn-outline {
+  @apply inline-flex items-center justify-center gap-2 rounded-full border border-cream/40 px-7 py-3.5 text-sm font-semibold tracking-wide text-cream transition-colors duration-200 hover:bg-cream/10 min-h-[44px];
+}
+
+.btn-outline-dark {
+  @apply inline-flex items-center justify-center gap-2 rounded-full border border-forest/30 px-7 py-3.5 text-sm font-semibold tracking-wide text-forest transition-colors duration-200 hover:bg-forest/5 min-h-[44px];
+}
+
+.input {
+  @apply w-full rounded-lg border border-forest/15 bg-white px-4 py-3 text-sm text-charcoal placeholder:text-charcoal/35 focus:border-gold focus:outline-none min-h-[44px];
+}
+
+.card-ivory {
+  @apply rounded-xl2 bg-ivory shadow-soft ring-1 ring-forest/5;
+}
+
+.leaf-bullet::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 10px;
+  background: linear-gradient(135deg, #E0C179, #A9822F);
+  clip-path: polygon(0% 100%, 0% 30%, 100% 0%, 100% 70%);
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 32s linear infinite;
+}
+
+input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible {
+  outline: 2px solid #C9A24B;
+  outline-offset: 2px;
+}
