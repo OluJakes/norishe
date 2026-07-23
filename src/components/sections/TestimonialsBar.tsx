@@ -29,7 +29,7 @@ export function TestimonialsBar({ testimonials }: { testimonials: Testimonial[] 
           ))}
         </div>
         <p className="mt-6 text-center text-xs text-charcoal/40">
-          Testimonials shown are illustrative placeholders — editable anytime from the admin panel.
+          Your success story could be next. Start your journey and taste the difference.
         </p>
       </Container>
     </section>
